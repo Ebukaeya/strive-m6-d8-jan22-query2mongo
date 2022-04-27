@@ -146,6 +146,28 @@ usersRouter.get("/:userId/purchaseHistory/:bookId", async (req, res, next) => {
 
 usersRouter.put("/:userId/purchaseHistory/:bookId", async (req, res, next) => {
   try {
+    // 1. Find the user
+    const user = await UsersModel.findById(req.params.userId)
+
+    if (user) {
+      // 2. Modify the user (with JS)
+
+      const index = user.purchaseHistory.findIndex(book => book._id.toString() === req.params.bookId)
+
+      if (index !== -1) {
+        user.purchaseHistory[index] = { ...user.purchaseHistory[index].toObject(), ...req.body }
+
+        // 3. Save it back
+
+        await user.save() // since user is a MONGOOSE DOCUMENT I can use .save()
+
+        res.send(user)
+      } else {
+        next(createError(404, `Book with id ${req.params.bookId} not found!`))
+      }
+    } else {
+      next(createError(404, `User with id ${req.params.userId} not found!`))
+    }
   } catch (error) {
     next(error)
   }
